@@ -1,0 +1,5 @@
+[workspace]
+resolver = "2"
+members = ["support/accelerator"]
+
+# Rust is an OPTIONAL native accelerator, not the language-model owner.
