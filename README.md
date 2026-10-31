@@ -64,7 +64,7 @@ python3 scripts/smoke_mac.py --device-tag m4-max --steps 100
 python3 scripts/smoke_mac.py --device-tag m5-pro --steps 100
 ```
 
-The script checks the chip name and GPU core count reported by
+The script checks that tracked Git files are clean and records the exact\n40-character source commit SHA. Both Macs must check out the **same commit**.\nThe script checks the chip name and GPU core count reported by
 `system_profiler SPDisplaysDataType`. Use the command matching the Mac you are
 currently on. For longer runs increase `--steps`, preserving the same dataset,
 seed, context, batch size and MLX version on both Macs.
@@ -97,3 +97,25 @@ end-to-end wall time is also recorded separately.
   corpus-level leakage audit or a final test-set evaluation.
 - Open-weight LoRA experiments and Oreslang-native model serving are future
   milestones separate from Apple's macOS 27 `fm` runtime.
+
+## Compare two GPU acceptance reports (only after both runs pass)
+
+Copy the two local `gpu-smoke-report.json` files onto one machine, keeping
+names distinct. The comparator has no MLX dependency:
+
+```sh
+python3 scripts/compare_benchmarks.py \\
+  --m4 artifacts/benchmarks/m4-max/gpu-smoke-report.json \\
+  --m5 artifacts/benchmarks/m5-pro/gpu-smoke-report.json \\
+  --out artifacts/benchmarks/comparison.json
+```
+
+It refuses failed/CPU/dirty-source reports, mismatched Git commits,
+models, corpus hashes, seeds, MLX versions or hyperparameters. It does **not**
+verify cryptographic authenticity of user-provided JSON, and 100-step smoke
+throughput is not a stable peak-performance or coding-quality benchmark.
+The dependency-free comparator tests can run even on Linux:
+
+```sh
+python3 -m unittest discover -s tests -p test_benchmarks.py -v
+```
