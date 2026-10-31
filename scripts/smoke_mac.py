@@ -46,11 +46,13 @@ def gpu_info():
 def run(*command):
     print("$ " + " ".join(map(str, command)), flush=True)
     started = time.perf_counter()
-    output = subprocess.run(command, cwd=ROOT, check=True, text=True,
+    output = subprocess.run(command, cwd=ROOT, check=False, text=True,
                             capture_output=True, timeout=900)
     print(output.stdout, end="", flush=True)
     if output.stderr:
         print(output.stderr, file=sys.stderr, end="", flush=True)
+    if output.returncode != 0:
+        raise RuntimeError(f"command failed (exit {output.returncode}): {command!r}")
     return {"elapsed_seconds": time.perf_counter() - started,
             "stdout": output.stdout}
 
