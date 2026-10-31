@@ -19,6 +19,12 @@ def load_report(path, expected_tag):
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if data.get("status") != "gpu_smoke_pass":
         raise ValueError(f"{expected_tag}: GPU acceptance did not pass")
+    source_commit = data.get("source_commit")
+    if (not isinstance(source_commit, str) or len(source_commit) != 40 or
+            any(ch not in "0123456789abcdef" for ch in source_commit)):
+        raise ValueError(f"{expected_tag}: missing/invalid source commit")
+    if data.get("tracked_source_clean") is not True:
+        raise ValueError(f"{expected_tag}: dirty source checkout")
     hw = data.get("hardware")
     model = data.get("model")
     if not isinstance(hw, dict) or not isinstance(model, dict):
@@ -54,6 +60,8 @@ def load_report(path, expected_tag):
 def compare(m4, m5):
     first = load_report(m4, "m4-max")
     second = load_report(m5, "m5-pro")
+    if first["source_commit"] != second["source_commit"]:
+        raise ValueError("comparison invalid: different Git source commits")
     a, b = first["model"], second["model"]
     differences = [k for k in COMPARABLE if a.get(k) != b.get(k)]
     if differences:
@@ -68,6 +76,7 @@ def compare(m4, m5):
         "m4_max_best_valid_loss": a["best_valid_loss"],
         "m5_pro_best_valid_loss": b["best_valid_loss"],
         "dataset_sha256": a["corpus_sha256"],
+        "source_commit": first["source_commit"],
         "mlx_version": a["mlx_version"],
         "model": a["model"],
         "steps": a["steps"],
