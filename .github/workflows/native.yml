@@ -1,0 +1,29 @@
+name: Native Oreslang and Rust support (non-GPU)
+
+on:
+  push:
+    branches: [main, "feat/native-**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-support:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Verify pure support Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Lint support-only crates
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Unit-test bounded CPU reference and native-gate input policy
+        run: cargo test --workspace
+      - name: Evidence boundary
+        run: echo "Rust CPU/reference tests only; Oreslang source-to-AOT and Apple Metal unexecuted."
