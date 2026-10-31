@@ -1,4 +1,4 @@
-Oreslang actors communicate through bounded channels.
+Oreslang actors communicate through bounded channels, safely.
 Oreslang actor state is sealed and accessed through critical-read or critical-write callbacks.
 Ownership and borrowing prevent invalid access after take.
 The local language model learns patterns from a sequence of characters.
