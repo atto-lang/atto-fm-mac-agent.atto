@@ -23,3 +23,7 @@ jobs:
         run: python3 scripts/static_gate.py
       - name: Validate benchmark reports with pure Python fixtures
         run: python3 -m unittest discover -s tests -p test_benchmarks.py -v
+      - name: Corpus rights, exact-head and dataset leakage gates (no MLX)
+        run: python3 -m unittest discover -s tests -p test_corpus_pipeline.py -v
+      - name: Compiler acceptance harness fixtures (no Oreslang compiler)
+        run: python3 -m unittest discover -s tests -p test_compiler_gate.py -v
