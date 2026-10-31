@@ -13,7 +13,7 @@ cd ores-fm-mac-agent.ores
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 scripts/train.py --text data/sample.txt --out artifacts/tiny --steps 200 --context 128
+python3 scripts/train.py --text data/sample.txt --out artifacts/tiny --steps 200 --context 16
 python3 scripts/generate.py --checkpoint artifacts/tiny --prompt "Oreslang"
 python3 -m unittest discover -s tests -v
 ```
