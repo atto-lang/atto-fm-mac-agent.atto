@@ -5,6 +5,7 @@ import json
 import random
 import sys
 from dataclasses import asdict
+from mlx.utils import tree_flatten
 from pathlib import Path
 
 import mlx.core as mx
@@ -69,8 +70,7 @@ def main():
             if vloss < best:
                 best = vloss
                 # Store config and vocabulary alongside weights, and only load locally trusted checkpoints.
-                mx.save_safetensors(str(args.out / "weights.safetensors"), dict(model.parameters().items()) if False else
-                                    {key: value for key, value in __import__("mlx.utils", fromlist=["tree_flatten"]).tree_flatten(model.parameters())})
+                mx.save_safetensors(str(args.out / "weights.safetensors"), {key: value for key, value in tree_flatten(model.parameters())})
                 tok.save(args.out / "vocab.json")
                 (args.out / "config.json").write_text(json.dumps(asdict(cfg), indent=2), encoding="utf-8")
     print(json.dumps({"best_valid_loss": best, "checkpoint": str(args.out.resolve())}))
