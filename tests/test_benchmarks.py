@@ -11,6 +11,8 @@ from scripts.compare_benchmarks import compare
 def report(chip, cores, rate):
     return {
         "status": "gpu_smoke_pass",
+        "source_commit": "1" * 40,
+        "tracked_source_clean": True,
         "hardware": {"chipset": chip, "gpu_cores": cores, "device": "gpu"},
         "model": {
             "status": "completed", "device": "gpu", "machine": "arm64",
@@ -43,6 +45,16 @@ class ComparisonTests(unittest.TestCase):
         output = self.check()
         self.assertEqual(output["status"], "comparable_smoke_reports")
         self.assertEqual(output["m4_max_over_m5_pro_ratio"], 2.0)
+
+    def test_reject_different_source_commits(self):
+        self.m5["source_commit"] = "2" * 40
+        with self.assertRaisesRegex(ValueError, "different Git source commits"):
+            self.check()
+
+    def test_reject_dirty_checkout(self):
+        self.m4["tracked_source_clean"] = False
+        with self.assertRaisesRegex(ValueError, "dirty source checkout"):
+            self.check()
 
     def test_reject_wrong_hardware(self):
         self.m5["hardware"]["gpu_cores"] = 40
