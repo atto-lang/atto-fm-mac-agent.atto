@@ -1,0 +1,56 @@
+// Oreslang-owned first language-model training and inference implementation.
+// Limited 2-symbol bigram model, add-one smoothing, integer CPU arithmetic.
+// NOT a Transformer, tokenizer, GPU training run, or useful coding assistant.
+// Deliberately uses the LLVM native scalar subset: int, function calls, if,
+// local mutable state, and deterministic return code. No Rust/Python involved.
+
+// Count one matching transition, preserving all other model rows.
+fnc update_count(int count, int observed_previous, int observed_next, int target_previous, int target_next): int {
+  if (observed_previous eq target_previous) {
+    if (observed_next eq target_next) { return count + 1; } fi
+  } fi
+  return count;
+}
+
+// Train one count of a two-symbol next-token model on a fixed 9-token corpus:
+// [0, 1, 0, 1, 0, 1, 1, 0, 1] => 8 adjacent-token observations.
+// Initial count 1 is add-one smoothing; no zero-row division.
+fnc fit_count(int target_previous, int target_next): int {
+  let int count = 1;
+  count = update_count(count, 0, 1, target_previous, target_next);
+  count = update_count(count, 1, 0, target_previous, target_next);
+  count = update_count(count, 0, 1, target_previous, target_next);
+  count = update_count(count, 1, 0, target_previous, target_next);
+  count = update_count(count, 0, 1, target_previous, target_next);
+  count = update_count(count, 1, 1, target_previous, target_next);
+  count = update_count(count, 1, 0, target_previous, target_next);
+  count = update_count(count, 0, 1, target_previous, target_next);
+  return count;
+}
+
+// Argmax next-token prediction: ties deliberately resolve to token 0.
+fnc predict_next(int count_next_zero, int count_next_one): int {
+  if (count_next_one > count_next_zero) { return 1; } fi
+  return 0;
+}
+
+// Held-out transitions [0 -> 1] and [1 -> 0] are not part of fit_count.
+// Exit 42 means the two-token bigram training/inference contract held.
+pub fnc main(): int {
+  let int count_00 = fit_count(0, 0);
+  let int count_01 = fit_count(0, 1);
+  let int count_10 = fit_count(1, 0);
+  let int count_11 = fit_count(1, 1);
+  if (count_00 eq 1) {
+    if (count_01 eq 5) {
+      if (count_10 eq 4) {
+        if (count_11 eq 2) {
+          if (predict_next(count_00, count_01) eq 1) {
+            if (predict_next(count_10, count_11) eq 0) { return 42; } fi
+          } fi
+        } fi
+      } fi
+    } fi
+  } fi
+  return 1;
+}
