@@ -21,3 +21,5 @@ jobs:
           python-version: "3.12"
       - name: Compile without imports or MLX runtime
         run: python3 scripts/static_gate.py
+      - name: Validate benchmark reports with pure Python fixtures
+        run: python3 -m unittest discover -s tests -p test_benchmarks.py -v
