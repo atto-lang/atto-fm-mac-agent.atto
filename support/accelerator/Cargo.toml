@@ -1,0 +1,11 @@
+[package]
+name = "ores-llm-accelerator"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Bounded C ABI CPU reference and future Metal accelerator support for native Oreslang"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
