@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,8 +41,8 @@ def ensure_safe_output(out: Path) -> Path:
     path = out.resolve()
     if path == sandbox or sandbox not in path.parents:
         raise ValueError("output must be within local gitignored artifacts/ directory")
-    if path.exists() and path.is_symlink():
-        raise ValueError("output cannot be a symlink")
+    if path.exists():
+        raise ValueError("output already exists; use a new directory")
     return path
 
 
@@ -76,30 +77,51 @@ def validate_sources(manifest: dict) -> list[dict]:
             raise ValueError("duplicate source ID or directory")
         ids.add(source_id)
         paths.add(path)
-        # A Git ref is evidence only when the local repository is verified by the
-        # caller; we avoid executing Git against untrusted directories.
+        def git(*args):
+            try:
+                return subprocess.check_output(
+                    ["git", "-C", str(path), *args], text=True,
+                    stderr=subprocess.DEVNULL, timeout=20
+                ).strip()
+            except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+                raise ValueError("unable to verify local Git source") from exc
+
+        if Path(git("rev-parse", "--show-toplevel")).resolve() != path:
+            raise ValueError("source path must be exactly the Git worktree root")
+        if git("rev-parse", "HEAD") != revision:
+            raise ValueError("source revision does not match actual Git HEAD")
+        if git("status", "--porcelain", "--untracked-files=no"):
+            raise ValueError("source has dirty tracked files")
         out.append({**item, "path": path})
     return out
 
 
 def enumerate_files(path: Path, max_bytes: int):
-    for root, dirs, names in os.walk(path, followlinks=False):
-        base = Path(root)
-        for d in dirs:
-            if (base / d).is_symlink():
-                raise ValueError("refusing symlink directory in source repository")
-        dirs[:] = sorted(d for d in dirs if d not in EXCLUDE_DIRS and not d.startswith("."))
-        for name in sorted(names):
-            file = base / name
-            if file.suffix.lower() not in EXTENSIONS:
-                continue
-            if file.is_symlink():
-                raise ValueError("refusing symlink file")
-            if not file.is_file():
-                continue
-            if file.stat().st_size > max_bytes:
-                raise ValueError("oversize candidate file; split or explicitly exclude it")
-            yield file
+    """Read only Git-tracked files in a pinned, clean repository."""
+    try:
+        tracked = subprocess.check_output(
+            ["git", "-C", str(path), "ls-files", "--cached", "-z"],
+            timeout=45
+        ).split(b"\x00")
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        raise ValueError("cannot enumerate tracked files") from exc
+    if len(tracked) > 100001:
+        raise ValueError("source exceeds 100k tracked-file budget")
+    for raw_name in sorted(name for name in tracked if name):
+        name = os.fsdecode(raw_name)
+        parts = Path(name).parts
+        if any(part in EXCLUDE_DIRS or part.startswith(".") for part in parts):
+            continue
+        file = path / name
+        if file.suffix.lower() not in EXTENSIONS:
+            continue
+        if file.is_symlink() or not file.resolve().is_relative_to(path):
+            raise ValueError("refusing symlink or path escape")
+        if not file.is_file():
+            raise ValueError("tracked candidate is not a regular file")
+        if file.stat().st_size > max_bytes:
+            raise ValueError("oversize candidate file; split or explicitly exclude it")
+        yield file
 
 
 def build(manifest: dict, output: Path, seed: int = 42, max_bytes: int = 65536) -> dict:
@@ -109,8 +131,6 @@ def build(manifest: dict, output: Path, seed: int = 42, max_bytes: int = 65536) 
     if max_bytes < 128 or max_bytes > 1024 * 1024:
         raise ValueError("max_bytes outside accepted 128B–1MiB range")
     output = ensure_safe_output(output)
-    if output.exists() and any(output.iterdir()):
-        raise ValueError("output is not empty; use a new directory to avoid stale datasets")
     keyed = sorted(sources, key=lambda s: sha_bytes(f"{seed}:{s['id']}".encode("utf-8")))
     split_map = {}
     for i, source in enumerate(keyed):
