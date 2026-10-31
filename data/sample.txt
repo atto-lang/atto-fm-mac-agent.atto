@@ -1,0 +1,5 @@
+Oreslang actors communicate through bounded channels.
+Oreslang actor state is sealed and accessed through critical-read or critical-write callbacks.
+Ownership and borrowing prevent invalid access after take.
+The local language model learns patterns from a sequence of characters.
+Training a small Transformer is a smoke test, not proof of useful intelligence.
