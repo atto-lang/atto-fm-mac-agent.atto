@@ -66,6 +66,17 @@ def main():
     if args.steps < 1:
         p.error("--steps must be positive")
     hw = gpu_info()
+    source_commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=5
+    ).strip()
+    tracked_changes = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=ROOT, text=True, timeout=5
+    ).strip()
+    if tracked_changes:
+        raise RuntimeError("tracked source files have uncommitted changes: " + tracked_changes)
+    if len(source_commit) != 40 or any(ch not in "0123456789abcdef" for ch in source_commit):
+        raise RuntimeError("failed to identify full Git commit SHA")
     expected = {"m4-max": ("M4 Max", 40), "m5-pro": ("M5 Pro", 20)}
     chip, cores = expected[args.device_tag]
     if hw["chipset"] != f"Apple {chip}" or hw["gpu_cores"] != cores:
@@ -95,6 +106,8 @@ def main():
     report = {
         "status": "gpu_smoke_pass",
         "hardware": hw,
+        "source_commit": source_commit,
+        "tracked_source_clean": True,
         "model": evidence,
         "unit_test_seconds": unit["elapsed_seconds"],
         "end_to_end_train_seconds": trained["elapsed_seconds"],
