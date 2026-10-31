@@ -10,12 +10,14 @@ A local-first language model lab for Apple Silicon, with **two separate backends
 ```sh
 git clone https://github.com/ores-truffle-oreslang/ores-fm-mac-agent.ores.git
 cd ores-fm-mac-agent.ores
+git switch feat/apple-silicon-tinyllm
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 scripts/train.py --text data/sample.txt --out artifacts/tiny --steps 200 --context 16
-python3 scripts/generate.py --checkpoint artifacts/tiny --prompt "Oreslang"
+python3 scripts/static_gate.py
 python3 -m unittest discover -s tests -v
+python3 scripts/train.py --text data/sample.txt --out artifacts/tiny --steps 200 --context 16 --device gpu
+python3 scripts/generate.py --checkpoint artifacts/tiny --prompt "Oreslang"
 ```
 
 Requires macOS on Apple Silicon and an MLX-compatible Python environment. The sample corpus only demonstrates that the pipeline runs: real language quality needs a much larger, lawfully sourced, carefully split corpus, compute and evaluation.
@@ -27,7 +29,7 @@ Requires macOS on Apple Silicon and an MLX-compatible Python environment. The sa
 - Checkpoint paths are local. Do not commit training data, model weights, secrets or machine/user files.
 - No network activity in training/generation scripts. Installation may access package indexes; MLX itself is a local runtime.
 - A single train job uses one Mac GPU. Two Macs do **not** combine transparently; evaluate on the second Mac or coordinate distributed training separately.
-- Do not assume GPU-core count alone predicts throughput; record memory, memory bandwidth, batch, sequence length, tokens/sec and temperature.
+- Do not assume GPU-core count alone predicts throughput; measure tokens/sec, training loss, GPU availability, and unified memory. The current script does not measure memory bandwidth or energy.
 
 ## Apple Foundation Models comparison
 
@@ -42,7 +44,56 @@ The adapter has no train operation. Apple's `fm` context constraints do not cap 
 
 ## Next stages
 
-1. Confirm local MLX train/generate smoke tests on both Macs; collect real GPU throughput and memory metrics.
+1. Confirm local MLX train/generate smoke tests on both Macs; collect real GPU throughput and unified-memory capacity.
 2. Add repository-permissioned Oreslang corpus preparation, licenses, deduplication, train/valid/test leakage checks and held-out evaluations.
 3. Add a separate open-weights MLX LM LoRA/QLoRA pathway for useful assistant quality, with pinned model and license.
 4. Add an Oreslang-facing local process/HTTP interface, then benchmark and harden it before backend-neutral claims.
+
+
+## One-command hardware acceptance (run on **each** Mac separately)
+
+The single-command runner executes the MLX model invariants, trains on Metal,
+reloads a real checkpoint, generates tokens, and writes JSON reports. It fails if
+GPU admission fails; there is **no silent CPU fallback**.
+
+```sh
+# On the 40-core Apple M4 Max:
+python3 scripts/smoke_mac.py --device-tag m4-max --steps 100
+
+# On the 20-core Apple M5 Pro:
+python3 scripts/smoke_mac.py --device-tag m5-pro --steps 100
+```
+
+The script checks the chip name and GPU core count reported by
+`system_profiler SPDisplaysDataType`. Use the command matching the Mac you are
+currently on. For longer runs increase `--steps`, preserving the same dataset,
+seed, context, batch size and MLX version on both Macs.
+
+Artifacts (ignored by Git) are written under
+`artifacts/benchmarks/<device-tag>/`:
+- `gpu-smoke-report.json`: PASS marker only after all gates succeed; hardware and
+  measured wall time
+- `model/report.json`: corpus SHA-256, train/validation size, best loss, device,
+  train-only tokens/sec, configuration and seed
+- `model/metrics.jsonl`: deterministic full-validation loss at checkpoints
+- `model/weights.safetensors`, `vocab.json`, `config.json`: local checkpoint
+
+Do not commit generated artifacts or private data. The training corpus is a tiny
+smoke fixture, not a benchmark for model intelligence or a proof of useful code
+generation. The reported throughput excludes validation and checkpointing time;
+end-to-end wall time is also recorded separately.
+
+### Evidence boundaries
+
+- `python3 scripts/static_gate.py` and GitHub CI only check source syntax and
+  the tiny corpus; they do **not** execute MLX or prove GPU execution.
+- `python3 -m unittest discover -s tests -v` checks attention causality, finite
+  gradients, parameter updates, checkpoint round-tripping and deterministic
+  held-out scoring, but must be run on a compatible MLX machine.
+- Neither of your Macs can be accessed automatically by a GitHub-hosted Linux
+  runner. Real M4/M5 pass evidence requires the local reports from both Macs.
+- Validation is a contiguous 10% holdout and scores every held-out next-token
+  target exactly once, resetting context at slice boundaries. It is not a
+  corpus-level leakage audit or a final test-set evaluation.
+- Open-weight LoRA experiments and Oreslang-native model serving are future
+  milestones separate from Apple's macOS 27 `fm` runtime.
