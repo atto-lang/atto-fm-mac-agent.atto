@@ -1,4 +1,5 @@
 .venv/
+.venv-lora/
 __pycache__/
 *.pyc
 artifacts/

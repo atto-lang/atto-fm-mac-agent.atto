@@ -119,3 +119,11 @@ The dependency-free comparator tests can run even on Linux:
 ```sh
 python3 -m unittest discover -s tests -p test_benchmarks.py -v
 ```
+
+## New experimental track: Oreslang corpus + offline MLX LoRA
+
+See [Oreslang fine-tuning design and security gates](docs/FINETUNING.md).
+This is a **separate, stacked draft PR** over the TinyLM baseline; the
+trainable owned TinyLM is not the same as a LoRA adapter to independently
+licensed open model weights. No real Mac GPU run or Oreslang compiler acceptance
+is yet certified for this fine-tuning track.

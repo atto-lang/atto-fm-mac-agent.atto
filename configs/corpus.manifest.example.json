@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "approved-repo-1",
+      "path": "/ABSOLUTE/PATH/TO/APPROVED/REPO1",
+      "revision": "0000000000000000000000000000000000000000",
+      "license": "MIT",
+      "authorized": false
+    },
+    {
+      "id": "approved-repo-2",
+      "path": "/ABSOLUTE/PATH/TO/APPROVED/REPO2",
+      "revision": "0000000000000000000000000000000000000000",
+      "license": "Apache-2.0",
+      "authorized": false
+    },
+    {
+      "id": "approved-repo-3",
+      "path": "/ABSOLUTE/PATH/TO/APPROVED/REPO3",
+      "revision": "0000000000000000000000000000000000000000",
+      "license": "MIT",
+      "authorized": false
+    }
+  ]
+}
