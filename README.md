@@ -1,4 +1,14 @@
+> **AI agent instructions (organization-wide):** Before working on code, issues, or pull requests, read and follow the [organization `AGENTS.md`](https://github.com/ores-truffle-oreslang/.github/blob/main/AGENTS.md), including its **merge-first stealth-development policy**. Honor any repository-local `AGENTS.md`, explicit holds, and GitHub-enforced rules.
+
 # Ores LLM — Apple Silicon Local Training
+
+## AttoLang naming and specification migration (2026-11-18)
+
+**AttoLang** is the current name of **Oreslang**. This is a legacy-organization checkout, `ores-truffle-oreslang/ores-fm-mac-agent.ores`, and new corresponding work belongs in not yet verified as a 1:1 repo (browse [atto-lang](https://github.com/atto-lang)). Matching names do **not** establish GitHub transfer, identical commits, issues/PRs, release history or feature completeness. Preserve this checkout's historical commands and paths where still applicable.
+
+The **canonical language specification is [atto-spec](https://github.com/atto-lang/atto-spec)**; [atto-platform-conformance](https://github.com/atto-lang/atto-platform-conformance) owns portable executable positive/negative tests, [atto-common-source](https://github.com/atto-lang/atto-common-source) owns portable libraries, and `atto-source.*` owns backend implementation. Modern source targets include `.atto` and `snake_case`, explicit `borrow!`/`take!`/`copy!`/`copy!!`/`share!`, [implicit argument borrowing](https://github.com/atto-lang/atto-spec/blob/main/language/implicit-argument-borrow-v1.md), [file/module `define const` including one-time `os.read_env`](https://github.com/atto-lang/atto-spec/blob/main/language/file-module-const-v1.md), and [`<<<`/`>>>`/`ashr` bitwise shifts vs. `<<`/`>>` directional stream operations](https://github.com/atto-lang/atto-spec/blob/main/language/bitwise-and-stream-operators-v1.md). They are language contract targets, **not** evidence every legacy backend supports them.
+
+Keep working legacy `.ores`, CLI/package/ABI and wire identifiers until separately verified migrations. No Python tools, scripts or tests for new work; use Rust for support tools where appropriate. Feature parity claims require exact SHA/tree, target/toolchain, real compiled guest execution and positive/negative checks. Empty-step workflows and host-only tests are **not executed** guest parity evidence.
 
 A local-first language model lab for Apple Silicon, with **two separate backends**:
 
@@ -47,13 +57,8 @@ The adapter has no train operation. Apple's `fm` context constraints do not cap 
 3. Add a separate open-weights MLX LM LoRA/QLoRA pathway for useful assistant quality, with pinned model and license.
 4. Add an Oreslang-facing local process/HTTP interface, then benchmark and harden it before backend-neutral claims.
 
-## Repository ownership and migration (2026-11-08)
+## Legacy migration provenance and gates
 
-**AttoLang** is the public name of the language; this code remains `ores-truffle-oreslang/ores-fm-mac-agent.ores` (historical Oreslang). Preserve existing `.ores` source compatibility, old package names and CLI identifiers until separately proven changes are merged.
+The original `ores-truffle-oreslang/ores-fm-mac-agent.ores` repository is archived; the current repository is `atto-lang/atto-fm-mac-agent.atto`. This is a distinct repository identity, not proof of an original-ID transfer or equivalent feature support. Preserve historical source and reproducible build commands until replacements are independently verified. Local macOS agent experiments and explicit device capability contracts belong here; unrestricted device privileges, cloud administration and remote device trust bypass do not.
 
-- **Scope:** local macOS agent experiments and explicit device capability/security contracts.
-- **Excluded:** unrestricted device privileges, cloud administration or remote device trust bypass.
-- **Organizational responsibility:** [atto-lang](https://github.com/atto-lang) owns portable language libraries, research code, compilers, tooling, demos and conformance; [atto-co](https://github.com/atto-co) independently owns cloud hosting, deployments, tenant infrastructure, identity, commercial services and billing. Pre-existing similarly named `atto-*` repositories are distinct Git identities absent transfer receipts.
-- **Proposed first migration:** authorized GitHub transfer of the same original repo ID/name/history into `atto-lang/ores-fm-mac-agent.ores`; no direct old-org → `atto-co` transfers are approved under the current plan. Any later product carve-out requires independent review.
-
-**Per-repo cutover checklist:** coordinate in [issue #26](https://github.com/ores-truffle-oreslang/.github/issues/26) and consult private [migration runbook draft #25](https://github.com/ores-truffle-oreslang/.github/pull/25). Before moving, verify exact commit SHA/tree and stable numeric ID, source/target owner and independent security approval, destination availability/visibility/protections, Actions/runners, secrets, webhooks, Apps, PRs/releases, packages/consumer URLs, Pages and rollback owner. Don't mirror private source without authorization. After an approved GitHub ownership transfer verify ID/history/tree equivalence, restore access and policy, update consumers and rerun exact-head tests with **nonzero executed steps**. `steps=[]`/`null` means `NOT_EXECUTED`; static or host-only tests do not certify real AttoLang guest code or security isolation.
+[atto-lang](https://github.com/atto-lang) owns language libraries, compilers, tooling, tests and examples; [atto-co](https://github.com/atto-co) owns hosted deployment, tenant infrastructure, identity and billing. A future original-ID transfer or product carve-out requires separate source/target owner and independent security approval. Inventory exact SHA/tree, numeric ID, visibility, permissions, protections, PRs, releases, packages, dependencies, runners, secrets, applications, webhooks, Pages and rollback owner; verify preservation and rerun exact-head tests after an actual transfer. Never mirror private source without authorization. Zero-step jobs are NOT_EXECUTED; host-only checks do not establish native guest/compiler execution or production safety.
