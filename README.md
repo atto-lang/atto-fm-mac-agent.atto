@@ -56,3 +56,9 @@ The adapter has no train operation. Apple's `fm` context constraints do not cap 
 2. Add repository-permissioned Oreslang corpus preparation, licenses, deduplication, train/valid/test leakage checks and held-out evaluations.
 3. Add a separate open-weights MLX LM LoRA/QLoRA pathway for useful assistant quality, with pinned model and license.
 4. Add an Oreslang-facing local process/HTTP interface, then benchmark and harden it before backend-neutral claims.
+
+## Legacy migration provenance and gates
+
+The original `ores-truffle-oreslang/ores-fm-mac-agent.ores` repository is archived; the current repository is `atto-lang/atto-fm-mac-agent.atto`. This is a distinct repository identity, not proof of an original-ID transfer or equivalent feature support. Preserve historical source and reproducible build commands until replacements are independently verified. Local macOS agent experiments and explicit device capability contracts belong here; unrestricted device privileges, cloud administration and remote device trust bypass do not.
+
+[atto-lang](https://github.com/atto-lang) owns language libraries, compilers, tooling, tests and examples; [atto-co](https://github.com/atto-co) owns hosted deployment, tenant infrastructure, identity and billing. A future original-ID transfer or product carve-out requires separate source/target owner and independent security approval. Inventory exact SHA/tree, numeric ID, visibility, permissions, protections, PRs, releases, packages, dependencies, runners, secrets, applications, webhooks, Pages and rollback owner; verify preservation and rerun exact-head tests after an actual transfer. Never mirror private source without authorization. Zero-step jobs are NOT_EXECUTED; host-only checks do not establish native guest/compiler execution or production safety.
